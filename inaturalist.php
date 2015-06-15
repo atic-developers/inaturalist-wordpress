@@ -39,20 +39,28 @@ function inat_options() {
 	if(isset($_POST['inat_base_url'])){
 		update_option( 'inat_base_url',esc_url_raw($_POST['inat_base_url']) );		
 	}
-	if(isset($_POST['inat_reduce_project'])){
-		update_option( 'inat_reduce_project',intval($_POST['inat_reduce_project']) );		
-	}
-	if(isset($_POST['inat_reduce_user'])){
-		update_option( 'inat_reduce_user',intval($_POST['inat_reduce_user']) );		
-	}
-	if(isset($_POST['inat_login_callback'])){
+	if(isset($_POST['inat_reduce_project']) && $_POST['inat_reduce_project'] != '0'){
+   update_option('inat_reduce_project',intval($_POST['inat_reduce_project']));	
+   // Once de project is set, we will call for de project information to inatWW
+   $id = get_option('inat_reduce_project');
+   $verb = 'projects';
+   $data = inat_get_call($verb, $id);
+   update_option('inat_project_info',$data);
+   $data2 = get_option('inat_project_info');
+  }
+  if(isset($_POST['inat_reduce_user']) && $_POST['inat_reduce_user'] != '0' && $_POST['inat_reduce_user'] != ''){
+    update_option( 'inat_reduce_user',intval($_POST['inat_reduce_user']) );		
+  }else {
+    update_option( 'inat_reduce_user','' );		
+  }
+  if(isset($_POST['inat_login_callback'])){
 		update_option( 'inat_login_callback',esc_url_raw($_POST['inat_login_callback']) );		
 	}
 	if(isset($_POST['inat_login_id'])){
-		update_option( 'inat_login_id',wp_kses($_POST['inat_login_id']) );		
+		update_option( 'inat_login_id',wp_kses($_POST['inat_login_id'],''));		
 	}
 	if(isset($_POST['inat_login_secret'])){
-		update_option( 'inat_login_secret',wp_kses($_POST['inat_login_secret']) );		
+		update_option( 'inat_login_secret',wp_kses($_POST['inat_login_secret'],'') );		
 	}
 	if(isset($_POST['inat_login_app'])){
 		update_option( 'inat_login_app',intval($_POST['inat_login_app']) );		
@@ -131,7 +139,7 @@ http://www.inaturalist.org/observations.json?per_page=40&order_by=observed_on&ta
 http://www.inaturalist.org/users/18730.json
 http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=observed_on
       ********/
-      case 'observations':
+    case 'observations':
         if($id == '') {
           if($red_usr != '') {
             $usr_data = inat_get_call('users', $red_usr);
@@ -249,6 +257,8 @@ add_filter( 'the_content', 'my_the_content_filter' );
 
  /** cookie manajer for inat auth **/
 function inat_cookies() {
+ //unset($_COOKIE['inat_access_token']);
+ //unset($_COOKIE['inat_code']);
   if(isset($_GET['code'])) {
     //$_SESSION['inat_code'] = $_GET['code'];
     setcookie('inat_code', $_GET['code'], time()+3600*24*30*12*10);

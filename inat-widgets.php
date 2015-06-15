@@ -30,7 +30,6 @@ class iNatLogin_Widget extends WP_Widget {
 		echo $args['before_widget']; // no tocar
 		if ( ! empty( $title ) )
 			echo $args['before_title'] . $title . $args['after_title'];
-		//echo __( 'Hello, World!', 'text_domain' );
   if(isset($_COOKIE) &&
     array_key_exists('inat_code', $_COOKIE) &&
     (!array_key_exists('inat_access_token', $_COOKIE) || $_COOKIE['inat_access_token'] == NULL))
@@ -38,12 +37,34 @@ class iNatLogin_Widget extends WP_Widget {
       if(!array_key_exists('access_token', $_COOKIE)) {
         echo '<a href="'.get_option('inat_base_url').'/oauth/authorize?client_id='.get_option('inat_login_id','').'&redirect_uri='.get_option('inat_login_callback','').'&response_type=code">'. __('Autorize this app','inat'). '</a>';
       } else {
-        //$_COOKIE['inat_access_token'] = $req['access_token'];
+        //Aquí mostrem la informació del usuari;
+        echo '<h2> Aquí lo petamos </h2>';
       }
 
     } elseif(!isset($_COOKIE) || !array_key_exists('inat_access_token', $_COOKIE) || $_COOKIE['inat_access_token'] == NULL) {
       echo '<a href="'.get_option('inat_base_url').'/oauth/authorize?client_id='.get_option('inat_login_id','').'&redirect_uri='.get_option('inat_login_callback','').'&response_type=code">'. __('Autorize this app','inat'). '</a> or <a href="'.site_url().'/inat/add/user">'.__('create new user','inat').'</a>';
     }
+ 
+    elseif (isset($_COOKIE['inat_access_token'])) {
+      $verb = 'users/edit';
+      $query = array();
+      $options = array('query' => $query, 'https' => FALSE);
+      $url = (get_option('inat_base_url').'/'.$verb.'.json');
+      $data = array(); 
+      $options = array(
+           'http' => array( 
+              "header" => "Authorization: Bearer ".$_COOKIE['inat_access_token'],
+              'method'  => 'GET',  
+              'content' => http_build_query($data),  
+            ), 
+          );
+//      $opt = array('http' => array('method' => 'POST', 'header' => 'Authorization: Bearer '.$_COOKIE['inat_access_token']));
+      $context  = stream_context_create($options);
+      $result = file_get_contents($url, false, $context);
+      $data = json_decode($result);
+      print_r($data);
+      echo '<h2> Aquí lo petamos </h2>';
+    };
 		echo $args['after_widget']; // no tocar
 	}
 

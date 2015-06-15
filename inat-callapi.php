@@ -1,5 +1,7 @@
-<?php 
-function inat_get_call($verb='observations', $id='', $page='', $per_page='', $order_by='', $custom=array()) {
+<?php
+
+
+function inat_get_call($verb='', $id='', $page='', $per_page='', $order_by='', $custom=array()) {
   /** Get the project information **/
 /**
  *
@@ -39,6 +41,7 @@ http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=ob
   //$url = 'http://www.inaturalist.org/observations.json';
   if($id != '') {$id = '/'.$id;}
   $url = get_option('inat_base_url').'/'.$verb.$id.'.json';
+  print_r($verb.'  -    ');
   $data = array();
   if($page != '') { $data += array('page' => $page); }
   if($per_page != '') {$data += array('per_page' => $per_page); }
@@ -155,7 +158,7 @@ function theme_observation($observation) {
   $output = '<div class="observation_single_wrapper">
   <div class="inat_observation_single" id="obs_'.$observation->id.'">
     <figure class="photo_single">';
-    if ( observation_photos_count == 0) {
+    if ( $observation->observation_photos_count == 0) {
       $output .= '<span class="no_photo">'.__('No photo','inat').'</span>';
     } else {
       $output .= '<div class="cycle-slideshow img-wrapper img-wrapper-'.$id.'"
@@ -223,14 +226,14 @@ function theme_observation($observation) {
 
 function theme_list_places($places, $params) {
   $output = '';
-  $prev_url = $base_url . '/inat/places/';
+  $prev_url = site_url() . '/inat/places/';
   $next_url = $prev_url;
-  if($current_page > 1) {
-    $prev_url .= $current_page - 1;
-  } else {
-    $prev_url .= '1';
-  }
-  $next_url .= $current_page + 1;
+  //if($current_page > 1) {
+  //  $prev_url .= $current_page - 1;
+  //} else {
+  //  $prev_url .= '1';
+  //}
+  //$next_url .= $current_page + 1;
   foreach($places as $id => $place) {
     $output .= '<div class="inat_place row row-'.$id.'" id="prj_'.$place->id.'">
       <div id="map-'.$place->id.'" style="width: 175px; height: 175px;"></div>
