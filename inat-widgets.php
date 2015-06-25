@@ -62,8 +62,15 @@ class iNatLogin_Widget extends WP_Widget {
       $context  = stream_context_create($options);
       $result = file_get_contents($url, false, $context);
       $data = json_decode($result);
-      print_r($data);
-      echo '<h2> Aquí lo petamos </h2>';
+      echo '
+       <div id=user-data>   
+       <h4 id=login>'.$data->name.'</h4> 
+       <div id=usr-img>  <img src='.$data->user_icon_url.'> </img></div>  
+       <div id=profile> <a href='.get_option('inat_login_callback').'/inat/user/'.$data->id.'> Profile </a> </div>  
+       <div id=usrinfo-logout> <a href='.get_option('inat_login_callback').'/?page_id=4&verb=logout> Logout </a> </div>  
+       <div id=email>'.$data->email.'</div>  
+       </div>';  
+
     };
 		echo $args['after_widget']; // no tocar
 	}

@@ -140,7 +140,8 @@ http://www.inaturalist.org/users/18730.json
 http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=observed_on
       ********/
     case 'observations':
-        if($id == '') {
+
+      if($id == '') {
           if($red_usr != '') {
             $usr_data = inat_get_call('users', $red_usr);
             $usr_name = $usr_data->login;
@@ -224,6 +225,13 @@ http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=ob
       case 'add/observation':
         $output .= theme_add_obs();
         break;
+      case 'logout':
+        setcookie("inat_code", "", time()-3600);
+        setcookie("inat_access_token", "", time()-3600);
+        wp_register_script('sessionout', plugins_url('js/sessionout.js', __FILE__), array('jquery'),'1.1', true);
+        wp_enqueue_script('sessionout');
+        print_r($_COOKIE);
+        break;
      default:
         $data = inat_get_call($verb, $id, $page, $per_page, $order_by, $custom);
         $output .= theme_list_obs($data, $params);
@@ -257,10 +265,10 @@ add_filter( 'the_content', 'my_the_content_filter' );
 
  /** cookie manajer for inat auth **/
 function inat_cookies() {
- //unset($_COOKIE['inat_access_token']);
- //unset($_COOKIE['inat_code']);
+  // unset($_COOKIE['inat_access_token']);
+  // unset($_COOKIE['inat_code']);
   if(isset($_GET['code'])) {
-    //$_SESSION['inat_code'] = $_GET['code'];
+    $_SESSION['inat_code'] = $_GET['code'];
     setcookie('inat_code', $_GET['code'], time()+3600*24*30*12*10);
   }
   if(isset($_COOKIE) &&
@@ -268,26 +276,19 @@ function inat_cookies() {
     (!array_key_exists('inat_access_token', $_COOKIE) || $_COOKIE['inat_access_token'] == NULL))
     {
     /** Get the access_token **/
-    $code = $_COOKIE['inat_code'];
+      $code = filter_input(INPUT_GET, 'code', FILTER_SANITIZE_ENCODED);
+      print_r($code);
     $client_id = get_option('inat_login_id','');
     $client_secret = get_option('inat_login_secret', '');
     $redirect_uri = get_option('inat_login_callback', '');
-
-    $data = 'client_id='.$client_id.'&client_secret='.$client_secret.'&code='.$code.'&redirect_uri='.$redirect_uri.'&grant_type=authorization_code';
-    $url = get_option('inat_base_url').'/oauth/token';
-    $opt = array('method' => 'POST', 'content' => $data, 'header' => array('Content-Type' => 'application/x-www-form-urlencoded'));
-    $options = array(
-      'http' => $opt,
-          //'headers'  => array('Content-type' => 'application/x-www-form-urlencoded'),
-          //'method'  => 'POST',
-          //'content' => $data,
-          //'data' => $data,
-      //),
-    );
-    $context  = stream_context_create($options);
+    $data = '?client_id='.$client_id.'&client_secret='.$client_secret.'&code='.$code.'&redirect_uri='.$redirect_uri.'&grant_type=authorization_code';
+    $url = get_option('inat_base_url').'/oauth/token'.$data;
+    $opt = array('http' => array('method' => 'POST', 'content' => $data, 'header' => 'Content-Type: application/x-www-form-urlencoded'));
+    $context  = stream_context_create($opt);
     $result = file_get_contents($url, false, $context);
+    print_r($result);
     $req = json_decode($result);
-        setcookie('inat_access_token', $req->access_token);
+    setcookie('inat_access_token', $req->access_token);
     }
 
 }
