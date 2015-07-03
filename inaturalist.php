@@ -226,11 +226,8 @@ http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=ob
         $output .= theme_add_obs();
         break;
       case 'logout':
-        setcookie("inat_code", "", time()-3600);
-        setcookie("inat_access_token", "", time()-3600);
         wp_register_script('sessionout', plugins_url('js/sessionout.js', __FILE__), array('jquery'),'1.1', true);
         wp_enqueue_script('sessionout');
-        print_r($_COOKIE);
         break;
      default:
         $data = inat_get_call($verb, $id, $page, $per_page, $order_by, $custom);
@@ -267,10 +264,17 @@ add_filter( 'the_content', 'my_the_content_filter' );
 function inat_cookies() {
   // unset($_COOKIE['inat_access_token']);
   // unset($_COOKIE['inat_code']);
+  if(isset($_GET['verb'])) {
+    if( $_GET['verb'] == 'logout'){
+      setcookie("inat_code", "", time()-3600);
+      setcookie("inat_access_token", "", time()-3600);
+    }
+  }
   if(isset($_GET['code'])) {
     $_SESSION['inat_code'] = $_GET['code'];
     setcookie('inat_code', $_GET['code'], time()+3600*24*30*12*10);
   }
+  
   if(isset($_COOKIE) &&
     array_key_exists('inat_code', $_COOKIE) &&
     (!array_key_exists('inat_access_token', $_COOKIE) || $_COOKIE['inat_access_token'] == NULL))
@@ -289,7 +293,42 @@ function inat_cookies() {
     print_r($result);
     $req = json_decode($result);
     setcookie('inat_access_token', $req->access_token);
+    } 
+  elseif (array_key_exists('inat_access_token', $_COOKIE) && $_COOKIE['inat_access_token'] != NULL) {
+    // If we have the acces token, we check if user it's added to the pluguin project
+    // Fist we get de user information
+    $url = get_option('inat_base_url').'/users/edit.json';
+    $opt = array('http' => array('method' => 'GET', 'header' => 'Authorization: Bearer '.$_COOKIE["inat_access_token"]));
+    $context  = stream_context_create($opt);
+    $result = file_get_contents($url, false, $context);
+    $req = json_decode($result);
+    global $user_info;
+    update_option( 'inat_user_info',$req );  
+    // Then we get de project of the user
+    $url = get_option('inat_base_url').'/projects/user/'.$req->login.'.json';
+    $opt = array('http' => array('method' => 'GET', 'header' => 'Authorization: Bearer '.$_COOKIE["inat_access_token"]));
+    $context  = stream_context_create($opt);
+    $result = file_get_contents($url, false, $context);
+    $json = json_decode($result);
+    $project = get_option('inat_reduce_project','');
+    $aux = 0;
+    foreach ($json as $key => $inatpjr) {
+      if ($inatpjr->project_id == $project) {
+        $aux = $aux + 1;
+        print_r('HOLAKASE');
+      }
     }
+      if ($aux == 0) {
+        // Call inat to join de user to the project, this allow user to uploadi observations directly ton the project
+        //$verb = get_option('inat_base_url').'/projects/'.$project.'/join.json';
+        $verb = 'http://www.inaturalist.org/projects/'.$project.'/join.json';
+        print_r($verb);
+        //$opt  = array('http' => array('method' => 'POST', 'header' => 'Authorization: Bearer '.$_COOKIE['inat_access_token']));   
+        $opt  = array('http' => array('method' => 'POST', 'header' => 'Authorization: Bearer '.$_COOKIE["inat_access_token"]));
+        $context = stream_context_create($opt);
+        $answer = file_get_contents($verb, false, $context);
+      }
+  }
 
 }
 add_action( 'init', 'inat_cookies');

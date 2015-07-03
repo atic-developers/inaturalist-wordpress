@@ -345,7 +345,7 @@ function theme_list_taxa($taxons, $params) {
   return $output;
 }
 function theme_user($user) {
-  $output .= '<div class="inat_project row" id="prj_'.$user->id.'">
+  $output = '<div class="inat_project row" id="prj_'.$user->id.'">
     <div class="photo">
       <img src="'.$user->medium_user_icon_url.'"/>
     </div> <!-- /photo -->

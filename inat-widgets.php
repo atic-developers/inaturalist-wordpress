@@ -66,7 +66,7 @@ class iNatLogin_Widget extends WP_Widget {
        <div id=user-data>   
        <h4 id=login>'.$data->name.'</h4> 
        <div id=usr-img>  <img src='.$data->user_icon_url.'> </img></div>  
-       <div id=profile> <a href='.get_option('inat_login_callback').'/inat/user/'.$data->id.'> Profile </a> </div>  
+       <div id=profile> <a href='.get_option('inat_login_callback').'/?page_id=4&verb=users&id='.$data->id.'> Profile </a> </div>  
        <div id=usrinfo-logout> <a href='.get_option('inat_login_callback').'/?page_id=4&verb=logout> Logout </a> </div>  
        <div id=email>'.$data->email.'</div>  
        </div>';  
