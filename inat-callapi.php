@@ -374,6 +374,12 @@ function theme_taxon($taxa) {
  */
 
 function theme_add_obs () {
+  $output = ' ';
+    $project_info = get_option('inat_project_info');
+  if (!isset($project_info->id) || $project_info == 'empty') {
+    $output .=' <label for="edit-inat-obs-add-alert">'.__('Alert!. First, you have to configure the project in the pluguin configuration menu', 'inat').' </label>';
+  }
+  
   $output = '
 <form accept-charset="UTF-8" id="inat-obs-add" method="post" action="'.plugins_url('addobs.php', __FILE__).'">
   <div>
@@ -415,15 +421,96 @@ function theme_add_obs () {
       <input type="text" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_place_guess" id="edit-inat-obs-add-place-guess">
     </div>
     <div class="form-item form-type-textfield form-item-inat-obs-add-latitude">
-      <label for="edit-inat-obs-add-latitude">'.__('Latitude ', 'inat').'</label>
-      <input type="text" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_latitude" id="edit-inat-obs-add-latitude">
-      <div class="description">'.__('Latitude of the observation. Presumed datum is WGS84.', 'inat').'</div>
+      <input type="hidden" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_latitude" id="edit-inat-obs-add-latitude">
     </div>
     <div class="form-item form-type-textfield form-item-inat-obs-add-longitude">
-      <label for="edit-inat-obs-add-longitude">'.__('Longitude ', 'inat').'</label>
-      <input type="text" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_longitude" id="edit-inat-obs-add-longitude">
-      <div class="description">'.__('Longitide of the observation. Presumed datum is WGS84.', 'inat').'</div>
+      <input type="hidden" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_longitude" id="edit-inat-obs-add-longitude">
     </div>
+    <label for="edit-inat-obs-map">'.__('Set the localitzation of the observation','inat').'</label>
+     <div id="map" style="width: 600px; height: 400px"></div>
+    <script type="text/javascript">
+      var map = L.map("map").setView([51.505, -0.09], 13);
+      L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+        zoom: 10
+      }).addTo(map);
+
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        var drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: drawnItems
+            }
+        });
+        map.addControl(drawControl);
+
+        map.on("draw:created", function (e) {
+            var type = e.layerType,
+                layer = e.layer;
+            drawnItems.addLayer(layer);
+        });
+        $("edit-submit").onclick(function() {
+          alert( "Handler for .click() called." );
+          $("#inat_obs_add_latitude_2").val() = drawnItems;
+        }); 
+    </script>';
+      
+// Now we are goingo to create de dinamical part of the form. We get de custom fields of every project, and depending de type we create diferent fields
+    foreach ($project_info->project_observation_fields as $key => $field) {
+      if($field->observation_field->name == 'transect_description'){
+        // CAREFUL, Here we have to implement something
+      }
+      else if($field->observation_field->name == 'transect_id'){
+        // do nothing
+      }
+      else{
+        switch ($field->observation_field->datatype) {                                                                                                          
+        case 'text':
+            if ($field->observation_field->allowed_values == '') {
+            $output .= 
+              '<div class="form-item form-type-textfield form-item-inat'.$field->observation_field->name.'">
+                 <label for="edit-inat-obs-add-time-zone">'.__($field->observation_field->name, 'inat').'</label>
+                 <input type="text" class="form-text" maxlength="128" size="60"  name="inat_ob'.$field->observation_field->name.'" id="edit-inat-obs-add-'.$field->observation_field->name.'">
+                 <div class="form-item form-type-textfield form-item-description">'. $field->observation_field->description.'  </div>
+              </div>';
+
+            } else {
+              //Let's prepare de options for the field                            
+              $options = explode("|", $field->observation_field->allowed_values);            
+              foreach ($options as $key => $value) {                              
+                //We put de values in keys of the array to return it to inat      
+                 $optionok[$value] = $value;
+              }                                                                   
+              $output .= '
+              <div class="form-item form-type-radios form-item-inat-obs-add-id-please">
+                <label for="edit-inat-obs-add-id-please">'.__('ID Please? ', 'inat').'</label>';
+             // Let's construct de options on the form
+              foreach ($optionok as $option) {
+                $output .= ' 
+                  <div class="form-item form-type-radio form-item-inat-obs-'.$field->observation_field->name.'">
+                    <input type="radio" class="form-radio" value="1" name="inat_obs_add_'.$field->observation_field->name.'" id="edit-inat-obs-'.$field->observation_field->name.'-1">  <label for="edit-inat-obs-'.$field->observation_field->name.'" class="option">'.__($option, 'inat').'</label>
+                  </div>';
+                }
+              $output .= '</div>';
+              }
+          break;
+          case 'date':
+            
+            $output .= '
+              <div class="form-item form-type-textfield form-item-inat-obs-'.$field->observation_field->name.'">
+                <label for="edit-inat-obs-'.$field->observation_field->name.'">'.__($field->observation_field->name, 'inat').'</label>
+                <input type="text" class="form-text" maxlength="128" size="60" value="'.date('Y-m-d').'" name="inat_obs_'.$field->observation_field->name.'" id="edit-inat-obs-'.$field->observation_field->name.'">
+                <div class="description">'.__($field->observation_field->description, 'inat').'</div>
+              </div>';
+          break;
+          case 'dna':
+          break;
+        }
+      }
+    };
+
+   $output .= '<input type="hidden"  value="" name="inat_obs_add_latitude_2" id="inat_obs_add_latitude_2">
     <input type="hidden" value="form-wgvLgl_girxRCnRkMKXJ6FAoQrNvYibo5lvowsTUbJo" name="form_build_id">
     <input type="hidden" value="__3eDu39QL78w2-XZHT9yxiGC5t3_zN2j5-BZAlLctg" name="form_token">
     <input type="hidden" value="inat_obs_obs_add" name="form_id">

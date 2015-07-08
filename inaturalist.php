@@ -23,12 +23,16 @@ function add_inat_menu() {
 add_action( 'wp_enqueue_scripts', 'register_plugin_styles' );
 function register_plugin_styles() {
   wp_register_script('leaflet', plugins_url('inaturalist/js/leaflet.js'), array('jquery'), false, false);
+  wp_register_script('leaflet_draw', plugins_url('inaturalist/js/leaflet.draw.js'), array('jquery'), false, false);
   wp_register_script('cycle2', plugins_url('inaturalist/js/jquery.cycle2.js'), array('jquery'), false, false);
   wp_register_style('leaflet', plugins_url('inaturalist/css/leaflet.css'), false);
+  wp_register_style('leaflet_draw', plugins_url('inaturalist/css/leaflet.draw.css'), false);
   wp_register_style('inat', plugins_url( 'inaturalist/css/inat.css' ) );
   wp_enqueue_script('leaflet');
+  wp_enqueue_script('leaflet_draw');
   wp_enqueue_script('cycle2');
   wp_enqueue_style('leaflet');
+  wp_enqueue_style('leaflet_draw');
   wp_enqueue_style('inat');
 }
 
@@ -315,7 +319,6 @@ function inat_cookies() {
     foreach ($json as $key => $inatpjr) {
       if ($inatpjr->project_id == $project) {
         $aux = $aux + 1;
-        print_r('HOLAKASE');
       }
     }
       if ($aux == 0) {
