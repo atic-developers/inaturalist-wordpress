@@ -297,3 +297,9 @@ figure-default img {
  */
 figurecaption {
 }
+.image_preview_cont > img {
+  width: 200px;
+}
+.form-item.form-type-textfield {
+  padding: 19px 1px 1px;
+}

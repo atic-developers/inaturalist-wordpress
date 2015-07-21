@@ -370,18 +370,107 @@ function theme_taxon($taxa) {
 }
 
 /**
+ * add observation trans
+ */
+
+function theme_add_trans () {
+  
+  $output = '';
+  $project_info = get_option('inat_project_info');
+  if (!isset($project_info->id) || $project_info == 'empty') {
+    $output .=' <label for="edit-inat-obs-add-alert">'.__('Alert!. First, you have to configure the project in the pluguin configuration menu', 'inat').' </label>';
+  }
+
+  wp_register_script('addobs', plugins_url('js/addobs.js', __FILE__), array('jquery'),'2.0', true);                                                   
+  wp_enqueue_script('addobs');
+
+  $output = '
+<form accept-charset="UTF-8" id="inat-obs-trans" method="post" action="'.plugins_url('addtran.php', __FILE__).'" >
+  <div id="form-trans">
+    
+    <div class="form-item form-type-textfield form-item-inat-obs-add-trans-name">
+      <label for="edit-inat-obs-add-species-guess">'.__('Transect name', 'inat').' </label>
+      <input type="text" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_species_guess" id="edit-inat-obs-add-species-guess">
+    </div>
+    <div class="form-item form-type-textfield form-item-inat-obs-add-trans-description">
+      <label for="edit-inat-obs-add-trans-description">'.__('Description', 'inat').' </label>
+<!--      <input type="text" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add-trans-desciption" id="edit-inat-obs-add-trans-description"> --!>
+    <textarea cols="40" rows="5" name="edit-inat-obs-add-trans-description">
+    Now we are inside the area - which is nice.
+    </textarea>
+    </div>
+    <label for="edit-inat-obs-map">'.__('Set the localitzation of the observation','inat').'</label>
+    <div id="map-trans"> 
+     <div id="map" style="width: 600px; height: 400px"></div>
+    </div>
+     <script type="text/javascript">';
+          if (isset($project_info->latitude) && isset($project_info->longitude)) {
+            $output .= 'var map = L.map("map").setView(['.$project_info->latitude.', '.$project_info->longitude.'], 13);';
+          } else {
+            $output .= 'var map = L.map("map").setView([51, -0.09], 13);';
+          }
+          $output .= '
+            L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
+              maxZoom: 18,
+              zoom: 10
+            }).addTo(map);
+
+              var drawnItems = new L.FeatureGroup();
+              map.addLayer(drawnItems);
+
+              var drawControl = new L.Control.Draw({
+                  edit: {
+                      featureGroup: drawnItems
+                  }
+              });
+              map.addControl(drawControl);
+
+              map.on("draw:created", function (e) {
+                  var type = e.layerType,
+                      layer = e.layer;
+                  drawnItems.addLayer(layer);
+              });
+              jQuery("edit-submit").click(function($) {
+                alert( "Handler for .click() called." );
+                $("#inat_obs_add_latitude_2").val() = drawnItems;
+              }); 
+
+      </script>
+      <table>
+           <tr>
+             <td class="tdhead"> Transect picture</td>
+             <td><input type="file" name="p_image[]" 
+             id="imgInp[]"  onchange="readURL(this)" /></td>
+           </tr>
+           <tr>
+             <td colspan="2" class="image_preview_cont"></td>
+           </tr>
+       </table>
+  </div>  
+     
+    <input type="hidden" class="form-text"  value="" name="inat_obs_add_wkt" id="edit-inat-obs-add-wkt">
+    <div id="edit-actions" class="form-actions form-wrapper">
+      <input type="submit" class="form-submit" value="'.__('Add transect', 'inat').'" name="op" id="edit-submit"> </input>
+    </div>
+</form>';
+
+
+  return $output;
+}
+
+/**
  * add observation form
  */
 
 function theme_add_obs () {
   $output = ' ';
-    $project_info = get_option('inat_project_info');
+  $project_info = get_option('inat_project_info');
   if (!isset($project_info->id) || $project_info == 'empty') {
     $output .=' <label for="edit-inat-obs-add-alert">'.__('Alert!. First, you have to configure the project in the pluguin configuration menu', 'inat').' </label>';
   }
   
   $output = '
-<form accept-charset="UTF-8" id="inat-obs-add" method="post" action="'.plugins_url('addobs.php', __FILE__).'">
+<form accept-charset="UTF-8" id="inat-obs-add" method="post" action="'.plugins_url('addobs.php', __FILE__).'"  enctype="multipart/form-data">
   <div>
     <div class="form-item form-type-textfield form-item-inat-obs-add-species-guess">
       <label for="edit-inat-obs-add-species-guess">'.__('What did you see?', 'inat').' </label>
@@ -419,7 +508,27 @@ function theme_add_obs () {
     <div class="form-item form-type-textfield form-item-inat-obs-add-place-guess">
       <label for="edit-inat-obs-add-place-guess">'.__('Place ', 'inat').'</label>
       <input type="text" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_place_guess" id="edit-inat-obs-add-place-guess">
-    </div>
+    </div>';
+    // Now we are goingo to generate de image picker with some limitations by js
+  $output .= '
+    <table>
+      <tr>
+        <td class="tdhead"> Observation pictures</td>
+        <td><input type="file" name="p_image[]" 
+        id="imgInp[]" multiple="multiple" onchange="readURL(this)" /></td>
+      </tr>
+      <tr>
+        <td colspan="2" class="image_preview_cont"></td>
+      </tr>
+    </table>';
+     wp_register_script('addobs', plugins_url('js/addobs.js', __FILE__), array('jquery'),'2.0', true);                                                   
+     wp_enqueue_script('addobs');
+     wp_enqueue_script('jquery');
+
+    // Now we are goingo to generate de map and the latitude and longitude chooser
+    $output .= '
+
+
     <div class="form-item form-type-textfield form-item-inat-obs-add-latitude">
       <input type="hidden" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_latitude" id="edit-inat-obs-add-latitude">
     </div>
@@ -427,36 +536,49 @@ function theme_add_obs () {
       <input type="hidden" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_longitude" id="edit-inat-obs-add-longitude">
     </div>
     <label for="edit-inat-obs-map">'.__('Set the localitzation of the observation','inat').'</label>
-     <div id="map" style="width: 600px; height: 400px"></div>
-    <script type="text/javascript">
-      var map = L.map("map").setView([51.505, -0.09], 13);
-      L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        zoom: 10
-      }).addTo(map);
+   
+    <div id="map-obs"> 
+      <div id="map" style="width: 600px; height: 400px"></div>
+    </div>
+     <script type="text/javascript">';
+          if (isset($project_info->latitude) && isset($project_info->longitude)) {
+            $output .= 'var map = L.map("map").setView(['.$project_info->latitude.', '.$project_info->longitude.'], 13);';
+          } else {
+            $output .= 'var map = L.map("map").setView([51, -0.09], 13);';
+          }
+          $output .= '
+            L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
+              maxZoom: 18,
+              zoom: 10
+            }).addTo(map);
 
-        var drawnItems = new L.FeatureGroup();
-        map.addLayer(drawnItems);
+              var drawnItems = new L.FeatureGroup();
+              map.addLayer(drawnItems);
 
-        var drawControl = new L.Control.Draw({
-            edit: {
-                featureGroup: drawnItems
-            }
-        });
-        map.addControl(drawControl);
+              var drawControl = new L.Control.Draw({
+                  edit: {
+                      featureGroup: drawnItems
+                  }
+              });
+              map.addControl(drawControl);
 
-        map.on("draw:created", function (e) {
-            var type = e.layerType,
-                layer = e.layer;
-            drawnItems.addLayer(layer);
-        });
-        $("edit-submit").onclick(function() {
-          alert( "Handler for .click() called." );
-          $("#inat_obs_add_latitude_2").val() = drawnItems;
-        }); 
-    </script>';
-      
-// Now we are goingo to create de dinamical part of the form. We get de custom fields of every project, and depending de type we create diferent fields
+              map.on("draw:created", function (e) {
+                  var type = e.layerType,
+                      layer = e.layer;
+                  drawnItems.addLayer(layer);
+              });
+              jQuery("edit-submit").click(function($) {
+                alert( "Handler for .click() called." );
+                $("#inat_obs_add_latitude_2").val() = drawnItems;
+              }); 
+
+      </script>
+           
+           
+     ';
+   //
+   // Now we are goingo to create de dinamical part of the form. We get de custom fields of every project, and depending de type we create diferent fields
+  //
     foreach ($project_info->project_observation_fields as $key => $field) {
       if($field->observation_field->name == 'transect_description'){
         // CAREFUL, Here we have to implement something
@@ -471,14 +593,16 @@ function theme_add_obs () {
             $output .= 
               '<div class="form-item form-type-textfield form-item-inat'.$field->observation_field->name.'">
                  <label for="edit-inat-obs-add-time-zone">'.__($field->observation_field->name, 'inat').'</label>
-                 <input type="text" class="form-text" maxlength="128" size="60"  name="inat_ob'.$field->observation_field->name.'" id="edit-inat-obs-add-'.$field->observation_field->name.'">
+                 <input type="text" class="form-text" maxlength="128" size="60"  name="extra[inat-obs-add-'.$field->observation_field->name.'][value]" id="edit-inat-obs-add-'.$field->observation_field->name.'">
+                 <input type="hidden" class="form-text" maxlength="128" size="60"  name="extra[inat-obs-add-'.$field->observation_field->name.'][id]" id="edit-inat-obs-add-'.$field->observation_field->name.'" value="'.$field->observation_field_id.'">
                  <div class="form-item form-type-textfield form-item-description">'. $field->observation_field->description.'  </div>
               </div>';
+           print_r($field->observation_field_id);
 
             } else {
               //Let's prepare de options for the field                            
               $options = explode("|", $field->observation_field->allowed_values);            
-              foreach ($options as $key => $value) {                              
+              foreach ($options as $keyi2 => $value) {                              
                 //We put de values in keys of the array to return it to inat      
                  $optionok[$value] = $value;
               }                                                                   
@@ -489,7 +613,8 @@ function theme_add_obs () {
               foreach ($optionok as $option) {
                 $output .= ' 
                   <div class="form-item form-type-radio form-item-inat-obs-'.$field->observation_field->name.'">
-                    <input type="radio" class="form-radio" value="1" name="inat_obs_add_'.$field->observation_field->name.'" id="edit-inat-obs-'.$field->observation_field->name.'-1">  <label for="edit-inat-obs-'.$field->observation_field->name.'" class="option">'.__($option, 'inat').'</label>
+                    <input type="radio" class="form-radio" value="'.$option.'" name="extra[inat-obs-add-'.$field->observation_field->name.'][value]" id="edit-inat-obs-'.$field->observation_field->name.'-1">  <label for="edit-inat-obs-'.$field->observation_field->name.'" class="option">'.__($option, 'inat').'</label>
+                 <input type="hidden" class="form-text" maxlength="128" size="60"  name="extra[inat-obs-add-'.$field->observation_field->name.'][id]" id="edit-inat-obs-add-'.$field->observation_field->name.'" value="'.$field->observation_field_id.'">
                   </div>';
                 }
               $output .= '</div>';
@@ -500,7 +625,8 @@ function theme_add_obs () {
             $output .= '
               <div class="form-item form-type-textfield form-item-inat-obs-'.$field->observation_field->name.'">
                 <label for="edit-inat-obs-'.$field->observation_field->name.'">'.__($field->observation_field->name, 'inat').'</label>
-                <input type="text" class="form-text" maxlength="128" size="60" value="'.date('Y-m-d').'" name="inat_obs_'.$field->observation_field->name.'" id="edit-inat-obs-'.$field->observation_field->name.'">
+                <input type="text" class="form-text" maxlength="128" size="60" value="'.date('Y-m-d').'" name="extra[inat-obs-add-'.$field->observation_field->name.'][value]" id="edit-inat-obs-'.$field->observation_field->name.'">
+                 <input type="hidden" class="form-text" maxlength="128" size="60"  name="extra[inat-obs-add-'.$field->observation_field->name.'][id]" id="edit-inat-obs-add-'.$field->observation_field->name.'" value="'.$field->observation_field_id.'">
                 <div class="description">'.__($field->observation_field->description, 'inat').'</div>
               </div>';
           break;
@@ -511,6 +637,7 @@ function theme_add_obs () {
     };
 
    $output .= '<input type="hidden"  value="" name="inat_obs_add_latitude_2" id="inat_obs_add_latitude_2">
+    <input type="hidden" value="form-wgvLgl_girxRCnRkMKXJ6FAoQrNvYibo5lvowsTUbJo" name="project_id">
     <input type="hidden" value="form-wgvLgl_girxRCnRkMKXJ6FAoQrNvYibo5lvowsTUbJo" name="form_build_id">
     <input type="hidden" value="__3eDu39QL78w2-XZHT9yxiGC5t3_zN2j5-BZAlLctg" name="form_token">
     <input type="hidden" value="inat_obs_obs_add" name="form_id">
@@ -520,6 +647,8 @@ function theme_add_obs () {
   </div>
   <input type="hidden" name="inat_base_url" value="'.get_option('inat_base_url').'" />
   <input type="hidden" name="inat_login_id" value="'.get_option('inat_login_id').'" />
+  <input type="hidden" name="inat_login_app" value="'.get_option('inat_login_app').'" />
+  <input type="hidden" name="inat_project_id" value="'.get_option('inat_reduce_project').'" />
   <input type="hidden" name="site_url" value="'.site_url().'" />
   <input type="hidden" name="inat_login_callback" value="'.get_option('inat_login_callback').'" />
   <input type="hidden" name="inat_post_id" value="'.get_option('inat_post_id').'" />

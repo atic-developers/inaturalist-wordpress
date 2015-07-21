@@ -229,6 +229,9 @@ http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=ob
       case 'add/observation':
         $output .= theme_add_obs();
         break;
+      case 'add/transect':
+        $output .= theme_add_trans();
+        break;
       case 'logout':
         wp_register_script('sessionout', plugins_url('js/sessionout.js', __FILE__), array('jquery'),'1.1', true);
         wp_enqueue_script('sessionout');
