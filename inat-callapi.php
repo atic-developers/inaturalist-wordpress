@@ -389,8 +389,8 @@ function theme_add_trans () {
   <div id="form-trans">
     
     <div class="form-item form-type-textfield form-item-inat-obs-add-trans-name">
-      <label for="edit-inat-obs-add-species-guess">'.__('Transect name', 'inat').' </label>
-      <input type="text" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_species_guess" id="edit-inat-obs-add-species-guess">
+      <label for="edit-inat-obs-add-trans-name">'.__('Transect name', 'inat').' </label>
+      <input type="text" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_trans_name" id="edit-inat-obs-add-trans-name">
     </div>
     <div class="form-item form-type-textfield form-item-inat-obs-add-trans-description">
       <label for="edit-inat-obs-add-trans-description">'.__('Description', 'inat').' </label>
