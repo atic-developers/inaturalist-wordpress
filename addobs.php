@@ -5,21 +5,24 @@
 $states = array();
     // Actions token
 $verb = 'observations.json';
-
+require_once("../../../wp-load.php"); 
 
  //   $appid = get_option('inat_login_appid', ''); 
  //   $project_info = get_option('inat_project_info','empty');
     $extrafield = '';
       $aux = 0;
 foreach ($_POST['extra'] as $key => $field) {                                                                     
-      if ($key == 'transect_id'){
-        $extrafield = '&observation[observation_field_values_attributes]['.$aux.'][observation_field_id]='.$field['id'];
-        $extrafield = '&observation[observation_field_values_attributes]['.$aux.'][value]='.$_POST[inat_login_app].'-';
+      if ($key == 'transect'){
+        $extrafield .= '&observation[observation_field_values_attributes]['.$aux.'][observation_field_id]='.$field['id'];
+        $trans = get_option('transects');
+        print_r($field['value']);
+        $extrafield .= '&observation[observation_field_values_attributes]['.$aux.'][value]='.$trans[$field['value']]['id'];
         $aux=$aux+1;
       }
       else if ($key == 'transect_description') {
-       // $extrafield .= '&observation[observation_field_values_attributes]['.$key.'][observation_field_id]='.$field['observation_field_id'];
-       // $extrafield .= '&observation[observation_field_values_attributes]['.$key.'][value]='.$transect->inat_obs_add_map[LANGUAGE_NONE]['0']['geom'];
+        $extrafield .= '&observation[observation_field_values_attributes]['.$aux.'][observation_field_id]='.$field['id'];
+        $extrafield .= '&observation[observation_field_values_attributes]['.$aux.'][value]=';
+        $aux = $aux+1;
       }
       else {
           $extrafield .= '&observation[observation_field_values_attributes]['.$aux.'][observation_field_id]='.$field['id'];
@@ -27,7 +30,7 @@ foreach ($_POST['extra'] as $key => $field) {
           $aux = $aux +1;
       }
 }
-
+print_r($extrafield);
     $data = 'observation[species_guess]='.$_POST['inat_obs_add_species_guess'].
       '&observation[taxon_id]='.$_POST['inat_obs_add_taxon_id'].
       '&observation[id_please]='.$_POST['inat_obs_add_id_please'].

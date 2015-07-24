@@ -448,7 +448,34 @@ function theme_add_trans () {
        </table>
   </div>  
      
-    <input type="hidden" class="form-text"  value="" name="inat_obs_add_wkt" id="edit-inat-obs-add-wkt">
+    <input type="hidden" class="form-text"  value="" name="inat_obs_add_wkt" id="edit-inat-obs-add-wkt">';
+   
+   
+$transects = get_option("transects");
+$appid = get_option("inat_login_app");
+  print_r('holaaa -- '.$transects.' --  ' ); 
+   if ($transects == "FALSE") {
+      $output .= "<input type='hidden' class='form-text'  value='".$appid."-1' name='inat_obs_add_tran_id' id='edit-inat-obs-tran-id'>";     
+   } else {
+      $number = sizeof($transects);
+      $idtran = $number + 1; 
+      if($number == 1) { 
+         if (isset($transArray['0']['id'])){
+          $idtran = $number +1;;
+         } else {
+          $idtran = '0';
+         }
+      } 
+      else {
+          $idtran = $number +1;;
+      }
+      print_r($number);
+      $output .='<input type="hidden" class="form-text"  value="'.$appid.'-'.$idtran.'" name="inat_obs_add_tran_id" id="edit-inat-obs-tran-id">';     
+   }
+
+
+
+ $output .='
     <div id="edit-actions" class="form-actions form-wrapper">
       <input type="submit" class="form-submit" value="'.__('Add transect', 'inat').'" name="op" id="edit-submit"> </input>
     </div>
@@ -534,10 +561,11 @@ function theme_add_obs () {
     </div>
     <div class="form-item form-type-textfield form-item-inat-obs-add-longitude">
       <input type="hidden" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add_longitude" id="edit-inat-obs-add-longitude">
-    </div>
-    <label for="edit-inat-obs-map">'.__('Set the localitzation of the observation','inat').'</label>
+    </div>';
    
-    <div id="map-obs"> 
+      
+    $output .= '<label for="edit-inat-obs-map">'.__('Set the localitzation of the observation','inat').'</label>
+      <div id="map-obs"> 
       <div id="map" style="width: 600px; height: 400px"></div>
     </div>
      <script type="text/javascript">';
@@ -582,9 +610,31 @@ function theme_add_obs () {
     foreach ($project_info->project_observation_fields as $key => $field) {
       if($field->observation_field->name == 'transect_description'){
         // CAREFUL, Here we have to implement something
+       $output .= ' <input type="hidden" class="form-text" maxlength="128" size="60"  name="extra[transect_description][id]" id="edit-inat-obs-add-'.$field->observation_field->name.'" value="'.$field->observation_field_id.'">';
       }
       else if($field->observation_field->name == 'transect_id'){
-        // do nothing
+         $transects = get_option("transects");
+         $numbertran = sizeof($transects);
+         print_r($transects);
+         print_r($numbertran);
+         if ($numbertran >= 1 && $transects != NULL) {
+           $output .= '
+                  <div class="form-item form-type-radios form-item-inat-obs-add-transects">
+                    <label for="edit-inat-obs-add-id-please">'.__('Choose Transect ', 'inat').'</label>
+                    <select name="extra[transect][value]">';
+                 // Let's construct de options on the form
+                  foreach ($transects as $clau => $value) {
+                    $output .= ' 
+                        <option value="'.$clau.'">'.$value["name"].'</option>  
+                        ';
+                  }
+             $output .= '
+                     </select> 
+                   </div>
+                 <input type="hidden" class="form-text" maxlength="128" size="60"  name="extra[transect][id]" id="edit-inat-obs-add-'.$field->observation_field->name.'" value="'.$field->observation_field_id.'">';
+     }           
+
+
       }
       else{
         switch ($field->observation_field->datatype) {                                                                                                          
