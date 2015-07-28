@@ -21,6 +21,7 @@ function readURL(input) {
 
 jQuery("#inat-obs-trans").submit(function($) {
   var latlng = 'LINESTRING(';
+  var latlngformat = '[';
   jQuery.each(drawnItems._layers, function(ind, valu) {
     len = valu._latlngs.length; 
     jQuery.each(valu._latlngs, function(index, value) {
@@ -28,15 +29,18 @@ jQuery("#inat-obs-trans").submit(function($) {
         if (index == len - 1) {
          console.log('Last field, submit form here');
          latlng = latlng + value.lat + ' '+ value.lng + ')';
+         latlngformat = latlngformat +'['+ value.lat + ' , '+ value.lng + ']]';
         }
         else {
         latlng = latlng + value.lat + ' '+ value.lng +' , ';
+        latlngformat = latlngformat +'['+ value.lat + ' , '+ value.lng +'],';
         }
     });
   });
   console.log(latlng);
   alert('vamoooo');
   jQuery("#edit-inat-obs-add-wkt").val(latlng);
+  jQuery("#edit-inat-obs-add-leaflet").val(latlngformat);
 }); 
 jQuery("#inat-obs-add").submit(function($) {
   jQuery("#edit-inat-obs-add-latitude").val(drawnItems._layers['42']._latlng.lat);

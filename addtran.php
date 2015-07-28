@@ -5,7 +5,7 @@
  // We are goingo to save de Transect data in Option talbe of wordpress
 //
 require_once("../../../wp-load.php");
- $trans = array( 'id' => $_POST['inat_obs_add_tran_id'], 'name' =>$_POST['inat_obs_add_trans_name'], 'description' => $_POST['edit-inat-obs-add-trans-description'], 'image' => $_POST['p_image'], 'wkt' => $_POST['inat_obs_add_wkt'] );
+ $trans = array( 'id' => $_POST['inat_obs_add_tran_id'], 'name' =>$_POST['inat_obs_add_trans_name'], 'description' => $_POST['edit-inat-obs-add-trans-description'], 'image' => $_POST['p_image'], 'wkt' => $_POST['inat_obs_add_wkt'], 'leaflet' => $_POST['inat_obs_add_leaflet'] );
 //print_r($trans);
  $transArray = get_option('transects');
 $length = sizeof($transArray);

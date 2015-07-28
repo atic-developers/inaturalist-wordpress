@@ -47,7 +47,7 @@ http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=ob
   if($per_page != '') {$data += array('per_page' => $per_page); }
   if($order_by != '') {$data += array('order_by' => $order_by); }
   if(isset($custom)) {$data += $custom; }
-
+  print_r($data);
   // use key 'http' even if you send the request to https://...
   $options = array(
       'http' => array(
@@ -103,7 +103,9 @@ function theme_list_single_obs($id,$ob, $params) {
       $output .= '<figure-default> <img src="'.plugins_url('img/default.png', __FILE__).'"/> </figure-default>';    
       }
       $output .= '</div> <!-- /photo -->
-      <h2><a href="'.site_url().'/?'.http_build_query(array('page_id' => get_option('inat_post_id'), 'verb'=>'observations', 'id' => $ob->id, )).'">'.$ob->species_guess.'</a></h2>
+ 
+        
+        <h2><a href="'.site_url().'/?'.http_build_query(array('page_id' => get_option('inat_post_id'), 'verb'=>'observations', 'id' => $ob->id, )).'">'.$ob->species_guess.'</a></h2>
       <div class="description">'.$ob->description.'</div>';
       if(isset($ob->user->login)){
         $output .= '<div class="observer"><span class="label">'.__('Observer: ', 'inat') .'</span>'. $ob->user->login.'</div>';
@@ -139,7 +141,7 @@ function theme_map_obs($data, $context = 'page') {
     foreach( $data as $id => $obs) {
       if($obs->latitude != ''){
         if(count($obs->photos) >= 1) {
-          $popup = '<div class="photo"><img src="'.$obs->photos[0]->small_url.'" alt="Photo" /> </div> <h2>'.$obs->species_guess.'</h2><div class="place">'.$obs->place_guess.'</div>';
+          $popup = '<div class="photo"><img src="'.$obs->photos[0]->small_url.'" alt="Photo" /> </div> <h2><a href="'.site_url().'/?'.http_build_query(array('page_id' => get_option('inat_post_id'), 'verb' =>'observations', 'id' => $obs->id, )).'">'.$obs->species_guess.'</a></h2><div class="place">'.$obs->place_guess.'</div>';
         } else {
           $popup = '<div class="photo">No photo </div> <h2>'.$obs->species_guess.'</h2><div class="place">'.$obs->place_guess.'</div>';
         }
@@ -370,6 +372,60 @@ function theme_taxon($taxa) {
 }
 
 /**
+ * Transects
+ */
+function theme_trans () {
+    $output = '';
+    $output .= 'Aquí hem de imprimir el mapa amb totes les dades del transectes. Copiarse de inat arena';
+    $output .= '   
+    <div id="map-trans"> 
+     <div id="map" style="width: 600px; height: 400px"></div>
+    </div>
+     <script type="text/javascript">';
+
+       $transects = get_option("transects");
+       $project_info = get_option('inat_project_info');
+         if (isset($project_info->latitude) && isset($project_info->longitude)) {
+            $output .= 'var map = L.map("map").setView(['.$project_info->latitude.', '.$project_info->longitude.'], 13);';
+          } else {
+            $output .= 'var map = L.map("map").setView([51, -0.09], 13);';
+          }
+          $output .= '
+            L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", {
+              maxZoom: 18,
+              zoom: 10
+            }).addTo(map);
+
+              var drawnItems = new L.FeatureGroup();
+            ';
+            foreach ($transects as $clau => $valor) {
+              $link='';
+                            $link = "<a href='".site_url(). "/?". http_build_query(array('page_id' => get_option('inat_post_id'), 'verb' => 'transects_one', 'field:transect_id' =>  $valor['id']))."'>".__($valor['name'],'inat')."</a>";
+              $transpop = $link;
+              $output .= 'L.polyline('.$valor['leaflet'].').bindPopup("'.$transpop.'").addTo(drawnItems);'; 
+            }
+            $output .='
+              map.addLayer(drawnItems);
+
+              var drawControl = new L.Control.Draw({
+                  edit: {
+                      featureGroup: drawnItems
+                  }
+              });
+
+              map.on("draw:created", function (e) {
+                  var type = e.layerType,
+                      layer = e.layer;
+                  drawnItems.addLayer(layer);
+              });
+
+      </script>
+';
+
+
+    return $output;
+}
+/**
  * add observation trans
  */
 
@@ -448,7 +504,8 @@ function theme_add_trans () {
        </table>
   </div>  
      
-    <input type="hidden" class="form-text"  value="" name="inat_obs_add_wkt" id="edit-inat-obs-add-wkt">';
+    <input type="hidden" class="form-text"  value="" name="inat_obs_add_wkt" id="edit-inat-obs-add-wkt">
+    <input type="hidden" class="form-text"  value="" name="inat_obs_add_leaflet" id="edit-inat-obs-add-leaflet">';
    
    
 $transects = get_option("transects");

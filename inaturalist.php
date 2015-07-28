@@ -115,9 +115,10 @@ function my_the_content_filter($content) {
     $per_page = (isset($GLOBALS['_REQUEST']['per_page'])) ? $GLOBALS['_REQUEST']['per_page'] : '50';
     $order_by = (isset($GLOBALS['_REQUEST']['order_by'])) ? $GLOBALS['_REQUEST']['order_by'] : 'observed_on';
     $custom = array();
-    if(isset($GLOBLAS['_REQUEST']['place_guess'])) { $custom += array('place_guess' => $GLOBALS['_REQUEST']['place_guess']); }
-    if(isset($GLOBLAS['_REQUEST']['taxon_id'])) { $custom += array('taxon_id' => $GLOBALS['_REQUEST']['taxon_id']); }
-    //if(isset($GLOBLAS['_REQUEST'][''])) { $custom += array('' => $GLOBALS['_REQUEST']['']); }
+    if(isset($GLOBALS['_REQUEST']['place_guess'])) { $custom += array('place_guess' => $GLOBALS['_REQUEST']['place_guess']); }
+    if(isset($GLOBALS['_REQUEST']['taxon_id'])) { $custom += array('taxon_id' => $GLOBALS['_REQUEST']['taxon_id']); }
+    if(isset($GLOBALS['_REQUEST']['field:transect_id'])) { $custom += array('field:transect_id' => $GLOBALS['_REQUEST']['field:transect_id']); }
+    print_r($verb);  
     //$ret_cont .= 'inat in!';
     $data = inat_get_call($verb, $id, $page, $per_page, $order_by, $custom);
     $params =array('verb' => $verb, 'id' => $id, 'page' => $page, 'per_page' => $per_page, 'order_by' => $order_by, 'custom' => $custom);
@@ -228,6 +229,17 @@ http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=ob
         break;
       case 'add/observation':
         $output .= theme_add_obs();
+        break;
+      case 'transects_one':
+          $verb = 'observations';
+          $id = '';
+          $data = inat_get_call($verb, $id, $page, $per_page, $order_by, $custom);
+          $output .= theme_map_obs($data);
+          $output .= theme_list_obs($data, $params);
+          $output .= theme_trans();
+        break;
+      case 'transects':
+        $output .= theme_trans();
         break;
       case 'add/transect':
         $output .= theme_add_trans();
