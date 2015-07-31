@@ -237,6 +237,9 @@ http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=ob
           $output .= theme_list_obs($data, $params);
           $output .= theme_trans();
         break;
+      case 'delete':
+        $output .= theme_delete($id);
+        break;
       case 'transects':
         $output .= theme_trans();
         break;
@@ -321,7 +324,7 @@ function inat_cookies() {
     $result = file_get_contents($url, false, $context);
     $req = json_decode($result);
     global $user_info;
-    update_option( 'inat_user_info',$req );  
+    update_option( 'inat_user_info',$req ); 
     // Then we get de project of the user
     $url = get_option('inat_base_url').'/projects/user/'.$req->login.'.json';
     $opt = array('http' => array('method' => 'GET', 'header' => 'Authorization: Bearer '.$_COOKIE["inat_access_token"]));

@@ -70,10 +70,8 @@ print_r($extrafield);
      $result = file_get_contents($url, false, $context);
      
     }
-    
-    
-    //header("Location: ".$_POST['site_url'].'/?'.http_build_query(array('page_id' => $_POST['inat_post_id'], 'verb' => 'observations', 'id' => $json[0]->id)));
-    //exit();
+    header("Location: ".$_POST['site_url'].'/?'.http_build_query(array('page_id' => $_POST['inat_post_id'], 'verb' => 'observations', 'id' => $json[0]->id)));
+    exit();
 
     // help functions
     //

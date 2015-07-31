@@ -122,8 +122,14 @@ function theme_list_single_obs($id,$ob, $params) {
     if(isset($ob->place_guess) && $ob->place_guess != ''){
       $output .= '<div class="place"><span class="label">'. __('Place: ', 'inat')."</span>".$ob->place_guess.'</div>';
     }
+    $user_info = get_option( 'inat_user_info'); 
+    if(isset($user_info->id)) {
+       if ($user_info->id == $ob->user_id ){
+         $output .= '<div class="delete"> <a href="'.site_url().'/?'.http_build_query(array('page_id' => get_option('inat_post_id'), 'verb'=>'delete', 'id' => $ob->id, )).'">Eliminar Observació </a> </div>';
+       }
+    }
     $output .= '</div>';
-
+    
   return $output;
 }
 function theme_map_obs($data, $context = 'page') {
@@ -368,6 +374,22 @@ function theme_taxon($taxa) {
     }
   $output .= '</div>';
 
+  return $output;
+}
+
+/**
+ * Delete
+ */
+function theme_delete ($id) {
+  
+  $verb = 'observations/'.$id.'.json';
+  $data = '';
+  $url = get_option('inat_base_url').'/'.$verb;                                                                                                                   
+  $opt = array('http' => array('method' => 'DELETE','content' => $data, 'header' => 'Authorization: Bearer '.$_COOKIE['inat_access_token']));
+  $context  = stream_context_create($opt);
+  $result = file_get_contents($url, false, $context);
+  $output = '';
+  $output .= '<div id="delete"> <h3> The observation has been removed </h3> </div>';
   return $output;
 }
 

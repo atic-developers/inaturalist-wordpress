@@ -303,3 +303,6 @@ figurecaption {
 .form-item.form-type-textfield {
   padding: 19px 1px 1px;
 }
+.comment-respond {
+    display: none;
+}
