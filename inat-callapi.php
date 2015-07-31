@@ -169,7 +169,7 @@ function theme_observation($observation) {
     if ( $observation->observation_photos_count == 0) {
       $output .= '<span class="no_photo">'.__('No photo','inat').'</span>';
     } else {
-      $output .= '<div class="cycle-slideshow img-wrapper img-wrapper-'.$id.'"
+      $output .= '<div class="cycle-slideshow img-wrapper img-wrapper-'.$observation->id.'"
       data-cycle-slides="> figure"
       data-cycle-fx=fade
       >';
@@ -228,9 +228,74 @@ function theme_observation($observation) {
     }
     $output .= '</div> </div>     
       </div>'; //wrapper
+  // Now we are going to see if the observations have any comment or identificaction
+    //
+    // identificactions
+    //
+ if(!empty($observation->identifications)) {                                                                                                                            
+    $output .= "<div class='ident-wraper'> <div class='title-wrap'>Identification Summary</div>";
+    foreach ($observation->identifications as $key => $value) {
+      //$output .= theme('inat_comments', array('comments' => $value)); 
+       $output .= 'esto es una identificacions';
+       $output .= custom_comment($value);
+    }
+    $output .= "</div>";
+  }
+    //
+    // Comments
+    //
+  if(!empty($observation->comments)) {
+    $output .= "<div class='comment-wraper'><div class='title-wrap'>Comments</div>";
+    foreach ($observation->comments as $key => $value) {
+      //$output .= theme('inat_comments', array('comments' => $value));
+      print_r($value); 
+       $output .= 'esto es un comentario';
+       $output .= custom_comment($value);
+    }
+    $output .= "</div>";
+  }
 
   return $output;
 }
+function custom_comment($comments){
+
+$hour = substr($comments->updated_at, strpos($comments->updated_at,'T'),9);
+$hour['0'] = '';
+$data = strstr($comments->updated_at, 'T', true).' - '.$hour;
+
+  $output2 =" 
+<div class='comment' id='comments'>  
+  <div class='user-column'> 
+    <div class='user-name'> ". $comments->user->name ."
+    </div>
+    <a href='".$site_url."/inat/user/".$comments->user->id."'>
+      <img class='usericon' alt='' src='".$comments->user->user_icon_url."'></img>
+    </a>
+  </div>
+  <div class='body-column'>
+    <div class='comment-body'> ".$comments->body." </div>
+    <div class='comment-data'> Updated at:  ". $data." </div>
+  </div>
+</div> 
+<div class= 'ident-column'> ";
+  if(isset($comments->taxon)){
+    $output2 .= "
+    <div class='taxo'> Taxon Identification </div> 
+    <div class='info'> 
+       <div class='name-c'> ". $comments->taxon->name." </div>
+       <div class='name-c'> Common name:  ". $comments->taxon->common_name->name ." </div>
+    </div>
+    <div class='image'> 
+       <a href='". $site_url."/inat/taxa/". $comments->taxon->id."'>
+         <img class='usericon' alt='' src='". $comments->taxon->image_url."'></img>
+       </a>
+    </div>";
+}
+$output .= '</div>';
+
+return $output2;
+
+}  
 
 function theme_list_places($places, $params) {
   $output = '';
