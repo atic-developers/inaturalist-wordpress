@@ -118,7 +118,6 @@ function my_the_content_filter($content) {
     if(isset($GLOBALS['_REQUEST']['place_guess'])) { $custom += array('place_guess' => $GLOBALS['_REQUEST']['place_guess']); }
     if(isset($GLOBALS['_REQUEST']['taxon_id'])) { $custom += array('taxon_id' => $GLOBALS['_REQUEST']['taxon_id']); }
     if(isset($GLOBALS['_REQUEST']['field:transect_id'])) { $custom += array('field:transect_id' => $GLOBALS['_REQUEST']['field:transect_id']); }
-    print_r($verb);  
     //$ret_cont .= 'inat in!';
     $data = inat_get_call($verb, $id, $page, $per_page, $order_by, $custom);
     $params =array('verb' => $verb, 'id' => $id, 'page' => $page, 'per_page' => $per_page, 'order_by' => $order_by, 'custom' => $custom);

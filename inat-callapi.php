@@ -639,6 +639,8 @@ function theme_add_obs () {
 
               var drawnItems = new L.FeatureGroup();
               map.addLayer(drawnItems);
+              var rec = new L.FeatureGroup();
+              map.addLayer(rec);
 
               var drawControl = new L.Control.Draw({
                   edit: {
@@ -674,11 +676,12 @@ function theme_add_obs () {
          $numbertran = sizeof($transects);
          print_r($transects);
          print_r($numbertran);
+         wp_localize_script( 'addobs', 'transects', $transects );
          if ($numbertran >= 1 && $transects != NULL) {
            $output .= '
                   <div class="form-item form-type-radios form-item-inat-obs-add-transects">
                     <label for="edit-inat-obs-add-id-please">'.__('Choose Transect ', 'inat').'</label>
-                    <select name="extra[transect][value]">';
+                    <select name="extra[transect][value]" id="extra[transect][value]">';
                  // Let's construct de options on the form
                   foreach ($transects as $clau => $value) {
                     $output .= ' 
