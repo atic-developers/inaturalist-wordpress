@@ -15,7 +15,6 @@ foreach ($_POST['extra'] as $key => $field) {
       if ($key == 'transect'){
         $extrafield .= '&observation[observation_field_values_attributes]['.$aux.'][observation_field_id]='.$field['id'];
         $trans = get_option('transects');
-        print_r($field['value']);
         $extrafield .= '&observation[observation_field_values_attributes]['.$aux.'][value]='.$trans[$field['value']]['id'];
         $aux=$aux+1;
       }
@@ -30,7 +29,6 @@ foreach ($_POST['extra'] as $key => $field) {
           $aux = $aux +1;
       }
 }
-print_r($extrafield);
     $data = 'observation[species_guess]='.$_POST['inat_obs_add_species_guess'].
       '&observation[taxon_id]='.$_POST['inat_obs_add_taxon_id'].
       '&observation[id_please]='.$_POST['inat_obs_add_id_please'].
@@ -58,20 +56,26 @@ print_r($extrafield);
     }
     if (isset($_FILES['p_image'])) {
       $verb = 'observation_photos.json';                                                                                                                      
-      $boundary = md5(uniqid());
-      $post_data = array(
-      'observation_photo[observation_id]' => $json['0']->id,
-       'file' => $_FILES['p_image']['tmp_name']['0'],
-      );
-      $dataphoto = multipart_encode($boundary,$post_data);
-      $url = $_POST['inat_base_url'].'/'.$verb;
-      $opt = array('http' => array('method' => 'POST','content' => $dataphoto, 'header' => array('Authorization: Bearer '.$_COOKIE['inat_access_token'].'\r\n ' ,'Content-type: multipart/form-data \r\n ')));
-     $context  = stream_context_create($opt);
-     $result = file_get_contents($url, false, $context);
-     
+      foreach ($_FILES['p_image']['name'] as $key => $value) {
+        if ($value != '' && $value != NULL) {
+          $boundary = md5(uniqid());
+          $post_data = array(
+          'observation_photo[observation_id]' => $json['0']->id,
+           'file' => $_FILES['p_image']['tmp_name'][$key],
+          );
+          $dataphoto = multipart_encode($boundary,$post_data);
+          $url = $_POST['inat_base_url'].'/'.$verb;
+          $head = array('Authorization: Bearer '.$_COOKIE['inat_access_token'],'Content-type: multipart/form-data; boundary='.$boundary);
+          $opt = array('http' => array('method' => 'POST', 'content' => $dataphoto,'header' => $head));
+          $context  = stream_context_create($opt);
+          $result = file_get_contents($url, false, $context);
+          $json2 = json_decode($result); 
+        }
+      }
     }
     header("Location: ".$_POST['site_url'].'/?'.http_build_query(array('page_id' => $_POST['inat_post_id'], 'verb' => 'observations', 'id' => $json[0]->id)));
     exit();
+
 
     // help functions
     //
@@ -102,7 +106,6 @@ function multipart_enc_file($path){
     $data .= "Content-Type: $mimetype\r\n\r\n";
     $data .= file_get_contents($path) . "\r\n";
     //$data .= "Photo data \r\n";
-    //dsm($data);
     return $data;
 } 
 ?>

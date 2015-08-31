@@ -4,8 +4,8 @@
  * Plugin URI: http://www.inaturalist.org
  * Description: This plugin connects your wordpress to inaturalist platform 
  * Version: 1.2
- * Author: Julià Mestieri for Projecte Ictineo SCCL (http://projecteictineo.com) 
- * Author URI: http://projecteictineo.com
+ * Author: Julià Mestieri  & Joan Giner for Atic Developer (github.com/aticdev) 
+ * Author URI: http://github.com/atidev
  * License: aGPLv3
  */
 //Include widget
@@ -118,6 +118,7 @@ function my_the_content_filter($content) {
     if(isset($GLOBALS['_REQUEST']['place_guess'])) { $custom += array('place_guess' => $GLOBALS['_REQUEST']['place_guess']); }
     if(isset($GLOBALS['_REQUEST']['taxon_id'])) { $custom += array('taxon_id' => $GLOBALS['_REQUEST']['taxon_id']); }
     if(isset($GLOBALS['_REQUEST']['field:transect_id'])) { $custom += array('field:transect_id' => $GLOBALS['_REQUEST']['field:transect_id']); }
+    if(isset($GLOBALS['_REQUEST']['commentid'])) { $custom += array('commentid' => $GLOBALS['_REQUEST']['commentid']); }
     //$ret_cont .= 'inat in!';
     $data = inat_get_call($verb, $id, $page, $per_page, $order_by, $custom);
     $params =array('verb' => $verb, 'id' => $id, 'page' => $page, 'per_page' => $per_page, 'order_by' => $order_by, 'custom' => $custom);
@@ -203,7 +204,11 @@ http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=ob
       case 'taxa':
         $data = inat_get_call($verb, $id, $page, $per_page, $order_by, $custom);
         if($id == '') {
-          $output .= theme_list_taxa($data, $params);
+          $project = get_option('inat_project_info');
+          $id = $project->project_list->id; 
+          $verb2 = 'lists'; 
+          $data2 = inat_get_call($verb2, $id, $page, $per_page, $order_by, $custom);
+          $output .= theme_list_taxa($data2, $params);
         } else {
           $output .= theme_taxon($data);
           $verb2 = 'observations';
@@ -235,7 +240,9 @@ http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=ob
           $data = inat_get_call($verb, $id, $page, $per_page, $order_by, $custom);
           $output .= theme_map_obs($data);
           $output .= theme_list_obs($data, $params);
-          $output .= theme_trans();
+        break;
+      case 'delete-comment':
+         $output .= theme_delete_comment($id,$custom);
         break;
       case 'delete':
         $output .= theme_delete($id);

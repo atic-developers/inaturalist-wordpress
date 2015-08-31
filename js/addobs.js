@@ -1,9 +1,11 @@
 
 function loadReader(e) {
-    var i = jQuery('.image_preview_cont img').length;
+    var i = jQuery('.image_preview_cont img').length + 1;
     console.log('onload: ' + i);
     jQuery('.image_preview_cont').append('<img src="#" id="img_preview'+i+'" />');
     jQuery('#img_preview'+i).attr('src',e.target.result);
+//    jQuery('input[name="p_image[]"]').css('display', 'none');
+    jQuery('#file-input-wrapper').append('<input type="file" name="p_image['+i+']" id="imgInp['+i+']" multiple onchange="readURL(this)" />'); 
 }
 function readURL(input) {
   if (input.files && input.files[0]) {
@@ -16,6 +18,10 @@ function readURL(input) {
         readers[i].onload = loadReader;
         readers[i].readAsDataURL(input.files[i]);
     }
+  }
+  var files = jQuery.getElementById("input[name='p_image[]']").files;
+  for (var i = 0; i < files.length; i++){
+  alert(files[i].name);
   }
 }
 
@@ -38,12 +44,10 @@ jQuery("#inat-obs-trans").submit(function($) {
     });
   });
   console.log(latlng);
-  alert('vamoooo');
   jQuery("#edit-inat-obs-add-wkt").val(latlng);
   jQuery("#edit-inat-obs-add-leaflet").val(latlngformat);
 }); 
  jQuery(".form-item-inat-obs-add-transects").change(function($) {                                                                                       
-      alert("epa"); 
       var e = document.getElementById("extra[transect][value]");
       var trans = e.options[e.selectedIndex].value;
       console.log(trans);
@@ -80,6 +84,10 @@ jQuery("#inat-obs-trans").submit(function($) {
  
  });
 jQuery("#inat-obs-add").submit(function($) {
-  jQuery("#edit-inat-obs-add-latitude").val(drawnItems._layers['42']._latlng.lat);
-  jQuery("#edit-inat-obs-add-longitude").val(drawnItems._layers['42']._latlng.lng);
+  jQuery.each( drawnItems._layers, function(key, layer) {    
+    var lat = layer._latlng.lat
+    var lng = layer._latlng.lng;
+    jQuery("#edit-inat-obs-add-latitude").val(lat);
+    jQuery("#edit-inat-obs-add-longitude").val(lng);
+    });
 }); 

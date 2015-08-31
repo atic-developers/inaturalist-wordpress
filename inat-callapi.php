@@ -41,13 +41,11 @@ http://www.inaturalist.org/observations/garrettt331.json?per_page=40&order_by=ob
   //$url = 'http://www.inaturalist.org/observations.json';
   if($id != '') {$id = '/'.$id;}
   $url = get_option('inat_base_url').'/'.$verb.$id.'.json';
-  print_r($verb.'  -    ');
   $data = array();
   if($page != '') { $data += array('page' => $page); }
   if($per_page != '') {$data += array('per_page' => $per_page); }
   if($order_by != '') {$data += array('order_by' => $order_by); }
   if(isset($custom)) {$data += $custom; }
-  print_r($data);
   // use key 'http' even if you send the request to https://...
   $options = array(
       'http' => array(
@@ -226,18 +224,39 @@ function theme_observation($observation) {
     if(isset($observation->taxon_id)) {
       $output .= '<div class="taxon"><span class=label> '.__('Taxon: ','inat').'</span> <a href="'.site_url().'/?'.http_build_query(array('page_id' => get_option('inat_post_id'), 'verb' => 'taxa', 'id' => $observation->taxon_id)).'">'.$observation->species_guess.'</a></div>';
     }
+
+    if(isset($observation->observation_field_values)){
+      foreach ($observation->observation_field_values as $key => $value) {
+         switch($value->observation_field->name) {
+         case'transect_id':
+         break;
+         case'transect_description':
+         break;
+         default:
+         $output .= '<div class="inat-field" id="inat-fieldi-'.$value->observation_field_id.'">
+                       <label class="inat-field-label">'.$value->observation_field->name.'</label>
+                       <span class="inat-field-value" id="inat-field-'.$value->observation_field_id.'">'.$value->value.'</span>
+                     </div>';
+          
+         break;
+
+         }  
+
+      }
+    }
     $output .= '</div> </div>     
       </div>'; //wrapper
-  // Now we are going to see if the observations have any comment or identificaction
+ 
+    // Now we are going to see if the observations have any comment or identificaction
+    $user_info = get_option( 'inat_user_info'); 
     //
     // identificactions
     //
  if(!empty($observation->identifications)) {                                                                                                                            
-    $output .= "<div class='ident-wraper'> <div class='title-wrap'>Identification Summary</div>";
+    $output .= "<div class='ident-wraper'> <div class='title-wrap'><h3>Identification Summary</h3></div>";
     foreach ($observation->identifications as $key => $value) {
       //$output .= theme('inat_comments', array('comments' => $value)); 
-       $output .= 'esto es una identificacions';
-       $output .= custom_comment($value);
+       $output .= custom_comment($value,$user_info->id,$observation->id);
     }
     $output .= "</div>";
   }
@@ -245,30 +264,44 @@ function theme_observation($observation) {
     // Comments
     //
   if(!empty($observation->comments)) {
-    $output .= "<div class='comment-wraper'><div class='title-wrap'>Comments</div>";
+    $output .= "<div class='comment-wraper'><div class='title-wrap'><h3>Comments</h3></div>";
     foreach ($observation->comments as $key => $value) {
       //$output .= theme('inat_comments', array('comments' => $value));
-      print_r($value); 
-       $output .= 'esto es un comentario';
-       $output .= custom_comment($value);
+       $output .= custom_comment($value,$user_info->id, $observation->id);
     }
     $output .= "</div>";
   }
-
+    //
+    // Comment publication
+    //
+  if (array_key_exists('inat_access_token', $_COOKIE) && $_COOKIE['inat_access_token'] != NULL) {
+     $output .= '<form accept-charset="UTF-8" id="inat-obs-trans" method="post" action="'.plugins_url('addcomments.php', __FILE__).'" >
+       <div class="form-item form-type-textfield form-item-inat-obs-add-trans-description">
+            <label for="edit-inat-obs-add-trans-description">'.__('Publish Comments', 'inat').' </label>
+      <!-- <input type="text" class="form-text" maxlength="128" size="60" value="" name="inat_obs_add-trans-desciption" id="edit-inat-obs-add-trans-description"> --!>
+          <textarea cols="40" rows="5" name="edit-comment-inat-body">
+Comment something about this observation
+          </textarea>
+          </div>
+           <input type="hidden" name="edit-comment-inat-id" value="'.$observation->id.'">
+          <div id="edit-actions" class="form-actions form-wrapper">
+              <input type="submit" class="form-submit" value="'.__('Publish comment', 'inat').'" name="op" id="edit-submit"> </input>
+             </div>';
+     $output .= '</form>';
+  }
   return $output;
 }
-function custom_comment($comments){
+function custom_comment($comments,$userid,$obsid){
 
 $hour = substr($comments->updated_at, strpos($comments->updated_at,'T'),9);
 $hour['0'] = '';
 $data = strstr($comments->updated_at, 'T', true).' - '.$hour;
-
   $output2 =" 
 <div class='comment' id='comments'>  
   <div class='user-column'> 
     <div class='user-name'> ". $comments->user->name ."
     </div>
-    <a href='".$site_url."/inat/user/".$comments->user->id."'>
+    <a href='".site_url()."/inat/user/".$comments->user->id."'>
       <img class='usericon' alt='' src='".$comments->user->user_icon_url."'></img>
     </a>
   </div>
@@ -276,22 +309,31 @@ $data = strstr($comments->updated_at, 'T', true).' - '.$hour;
     <div class='comment-body'> ".$comments->body." </div>
     <div class='comment-data'> Updated at:  ". $data." </div>
   </div>
-</div> 
-<div class= 'ident-column'> ";
+</div>"; 
   if(isset($comments->taxon)){
     $output2 .= "
-    <div class='taxo'> Taxon Identification </div> 
-    <div class='info'> 
-       <div class='name-c'> ". $comments->taxon->name." </div>
-       <div class='name-c'> Common name:  ". $comments->taxon->common_name->name ." </div>
+<div class= 'ident-column'> 
+  <div class='taxo'> Taxon Identification 
+  </div> 
+  <div class='info'> 
+    <div class='name-c'> ". $comments->taxon->name." 
     </div>
-    <div class='image'> 
-       <a href='". $site_url."/inat/taxa/". $comments->taxon->id."'>
-         <img class='usericon' alt='' src='". $comments->taxon->image_url."'></img>
-       </a>
-    </div>";
+    <div class='name-c'> Common name:  ". $comments->taxon->common_name->name ." 
+    </div>
+  </div>
+  <div class='image'> 
+      <a href='". site_url()."/inat/taxa/". $comments->taxon->id."'>
+        <img class='usericon' alt='' src='". $comments->taxon->image_url."'></img>
+      </a>
+  </div>
+</div>";
+  }
+if($comments->user->id == $userid) { 
+  $output2 .="<div class='delete-comment'> 
+    <h2><a href='".site_url(). "/?".http_build_query(array('page_id' => get_option('inat_post_id'), 'verb' => 'delete-comment', 'id' => $obsid, 'commentid' => $comments->id))."'>Delete Comment</a></h2>
+   </div>";
 }
-$output .= '</div>';
+  
 
 return $output2;
 
@@ -402,14 +444,17 @@ function theme_project($projects) {
   </div>';
   return $output;
 }
-function theme_list_taxa($taxons, $params) {
+function theme_list_taxa($taxons_list, $params) {
+
+  $taxons = $taxons_list->listed_taxa;
   $output = '<div id="taxa-wrapper">';
-  foreach($taxons as $id => $taxa) {
+  foreach($taxons as $id => $taxon) {
+    $taxa = $taxon->taxon;
     $output .= '<div class="inat_taxa row row-'.$id.'" id="prj_'.$taxa->id.'">
       <div class="photo">
         <img src="'.$taxa->photo_url.'"/>
       </div> <!-- /photo -->
-      <h2><a href="'.site_url() . '/?'. http_build_query(array('page_id' => get_option('inat_post_id'), 'verb' => 'taxa', 'id' => $taxa->id)).'">'.$taxa->common_name->name.' ('.$taxa->observations_count.') </a></h2>
+      <h2><a href="'.site_url() . '/?'. http_build_query(array('page_id' => get_option('inat_post_id'), 'verb' => 'taxa', 'id' => $taxa->id)).'">'.$taxa->name.' ('.$taxa->observations_count.') </a></h2>
 
       <div class="description">'.$taxa->wikipedia_summary.'</div>
   </div>';
@@ -455,15 +500,31 @@ function theme_delete ($id) {
   $result = file_get_contents($url, false, $context);
   $output = '';
   $output .= '<div id="delete"> <h3> The observation has been removed </h3> </div>';
+  $output .= '<div id="link"> <a href="'.site_url(). '/?'. http_build_query(array('page_id' => get_option('inat_post_id'), 'verb' => 'observations')).'">'.__('Return to the observation list','inat').'</a></div>';
   return $output;
 }
 
+/**
+ * Delete-cooment
+ */
+function theme_delete_comment ($id,$commentid) {
+  
+  $verb = 'comments/'.$commentid['commentid'].'.json';
+  $data = '';
+  $url = get_option('inat_base_url').'/'.$verb;                                     $opt = array('http' => array('method' => 'DELETE', 'header' => 'Authorization: Bearer '.$_COOKIE['inat_access_token']));
+  $context  = stream_context_create($opt);
+  $result = file_get_contents($url, false, $context);
+//  wp_redirect(site_url().'/?'.http_build_query(array('page_id' => get_option('inat_post_id'), 'verb'=>'Observation', 'id' => $id, )));
+  $output = '';
+  $output .= '<div id="delete"> <h3> The comment has been removed </h3> </div>
+             <div id="click"> <h4> <a href="'.site_url().'/?'.http_build_query(array('page_id' => get_option('inat_post_id'), 'verb'=>'observations', 'id' => $id, )).'"> Return to the Observation </a> </h4> </div>';
+  return $output;
+}
 /**
  * Transects
  */
 function theme_trans () {
     $output = '';
-    $output .= 'Aquí hem de imprimir el mapa amb totes les dades del transectes. Copiarse de inat arena';
     $output .= '   
     <div id="map-trans"> 
      <div id="map" style="width: 600px; height: 400px"></div>
@@ -597,7 +658,6 @@ function theme_add_trans () {
    
 $transects = get_option("transects");
 $appid = get_option("inat_login_app");
-  print_r('holaaa -- '.$transects.' --  ' ); 
    if ($transects == "FALSE") {
       $output .= "<input type='hidden' class='form-text'  value='".$appid."-1' name='inat_obs_add_tran_id' id='edit-inat-obs-tran-id'>";     
    } else {
@@ -613,7 +673,6 @@ $appid = get_option("inat_login_app");
       else {
           $idtran = $number +1;;
       }
-      print_r($number);
       $output .='<input type="hidden" class="form-text"  value="'.$appid.'-'.$idtran.'" name="inat_obs_add_tran_id" id="edit-inat-obs-tran-id">';     
    }
 
@@ -641,7 +700,7 @@ function theme_add_obs () {
   }
   
   $output = '
-<form accept-charset="UTF-8" id="inat-obs-add" method="post" action="'.plugins_url('addobs.php', __FILE__).'"  enctype="multipart/form-data">
+<form accept-charset="UTF-8" id="inat-obs-add" method="POST" action="'.plugins_url('addobs.php', __FILE__).'"  enctype="multipart/form-data">
   <div>
     <div class="form-item form-type-textfield form-item-inat-obs-add-species-guess">
       <label for="edit-inat-obs-add-species-guess">'.__('What did you see?', 'inat').' </label>
@@ -685,8 +744,8 @@ function theme_add_obs () {
     <table>
       <tr>
         <td class="tdhead"> Observation pictures</td>
-        <td><input type="file" name="p_image[]" 
-        id="imgInp[]" multiple="multiple" onchange="readURL(this)" /></td>
+        <td id="file-input-wrapper"><input type="file" name="p_image[0]" 
+        id="imgInp[]" multiple onchange="readURL(this)" /></td>
       </tr>
       <tr>
         <td colspan="2" class="image_preview_cont"></td>
@@ -761,8 +820,6 @@ function theme_add_obs () {
       else if($field->observation_field->name == 'transect_id'){
          $transects = get_option("transects");
          $numbertran = sizeof($transects);
-         print_r($transects);
-         print_r($numbertran);
          wp_localize_script( 'addobs', 'transects', $transects );
          if ($numbertran >= 1 && $transects != NULL) {
            $output .= '
@@ -794,7 +851,6 @@ function theme_add_obs () {
                  <input type="hidden" class="form-text" maxlength="128" size="60"  name="extra[inat-obs-add-'.$field->observation_field->name.'][id]" id="edit-inat-obs-add-'.$field->observation_field->name.'" value="'.$field->observation_field_id.'">
                  <div class="form-item form-type-textfield form-item-description">'. $field->observation_field->description.'  </div>
               </div>';
-           print_r($field->observation_field_id);
 
             } else {
               //Let's prepare de options for the field                            
